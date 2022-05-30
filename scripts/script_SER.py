@@ -1,6 +1,9 @@
 from msilib.schema import Binary
 import numpy as np
 from pulp import *
+import pandas as pd
+from itertools import combinations
+import math as mt
 
 # fonction prédéfinies
 
@@ -8,14 +11,14 @@ def total_fixed_investment_cost(c_fix, l, alpha, X, nb_vertices):
     S = 0
     for i in range(nb_vertices):
         for j in range(nb_vertices):
-            S += (alpha*c_fix[i][j]*l[i][j])*X[(i,j)]
+            S += (alpha*c_fix[(i,j)]*l[(i,j)])*X[(i,j)]
     return S
 
 def total_variable_investment_cost(c_var, l, alpha, P_in, nb_vertices):
     S = 0
     for i in range(nb_vertices):
         for j in range(nb_vertices):
-            S += (alpha*c_var[i][j]*l[i][j])*P_in[(i,j)]
+            S += (alpha*c_var[(i,j)]*l[(i,j)])*P_in[(i,j)]
     return S
 
 def total_heat_generation_cost( Tflh, c_heat, beta, P_in, v_0, nb_vertices):
@@ -25,24 +28,24 @@ def total_heat_generation_cost( Tflh, c_heat, beta, P_in, v_0, nb_vertices):
     return S
 
 def total_maintenance_cost(c_om, l, X, nb_vertices):
-    S = 0
+    S(i,j)
     for i in range(nb_vertices):
         for j in range(nb_vertices):
-            S += (c_om[i][j]*l[i][j])*X[(i,j)]
+            S += (c_om[(i,j)]*l[(i,j)])*X[(i,j)]
     return S
 
 def unmet_demand_penalty(p_umd, D, X, nb_vertices):
     S = 0
     for i in range(nb_vertices):
         for j in range(nb_vertices):
-            S += (p_umd[i][j]*D[i][j])*(1 - X[(i,j)] - X[(j,i)])
+            S += (p_umd[(i,j)]*D[(i,j)])*(1 - X[(i,j)] - X[(j,i)])
     return S/2
 
 def total_revenue(c_rev, D, lbd, X, nb_vertices):
     S = 0
     for i in range(nb_vertices):
         for j in range(nb_vertices):
-            S += lbd*c_rev[i][j]*D[i][j]*X[(i,j)]
+            S += lbd*c_rev[(i,j)]*D[(i,j)]*X[(i,j)]
     return S
 
 def total_investment_cost(c_fix, l, alpha, X, c_var, P_in, nb_vertices):
@@ -79,8 +82,8 @@ def contrainte_2(X, nb_vertices):
 def contrainte_3(teta_var, teta_fix, l, lbd, beta, d, P_in, P_out, X, nb_vertices):
     for i in range(nb_vertices):
         for j in range(nb_vertices):
-            delta = d[i][j]*beta*lbd + teta_fix[i][j]*l[i][j]
-            eta = 1 - teta_var[i][j]*l[i][j]
+            delta = d[(i,j)]*beta*lbd + teta_fix[(i,j)]*l[(i,j)]
+            eta = 1 - teta_var[(i,j)]*l[(i,j)]
             if i != j and eta*P_in[(i,j)] - P_out[(i,j)] != delta*X[(i,j)]:
                 return False       
     return True
@@ -101,7 +104,7 @@ def contrainte_4(P_in, P_out, v_0, nb_vertices):
 def contrainte_5(P_in, X, C_max, nb_vertices):
     for i in range(nb_vertices):
         for j in range(nb_vertices):
-            if P_in[(i,j)] > X[(i,j)]*C_max[i][j]:
+            if P_in[(i,j)] > X[(i,j)]*C_max[(i,j)]:
                 return False
     return True
 
@@ -130,7 +133,57 @@ def contrainte_8(X, v_0, nb_vertices):
                 return False
     return True
 
+#import des paramètres
+
+if __name__ == "__main__":
+
+    inputData = r'xls_tests\InputDataExample.xlsx'
+
+    # Input Data Preparation #
+    def read_excel_data(filename, sheet_name):
+        data = pd.read_excel(filename, sheet_name=sheet_name, header=None, engine='openpyxl')
+        values = data.values
+        if min(values.shape) == 1:  # This If is to make the code insensitive to column-wise or row-wise expression #
+            if values.shape[0] == 1:
+                values = values.tolist()
+            else:
+                values = values.transpose()
+                values = values.tolist()
+            return values[0]
+        else:
+            data_dict = {}
+            if min(values.shape) == 2:  # For single-dimension parameters in Excel
+                if values.shape[0] == 2:
+                    for i in range(values.shape[1]):
+                        data_dict[i+1] = values[1][i]
+                else:
+                    for i in range(values.shape[0]):
+                        data_dict[i+1] = values[i][1]
+
+            else:  # For two-dimension (matrix) parameters in Excel
+                for i in range(values.shape[0]):
+                    for j in range(values.shape[1]):
+                        data_dict[(i+1, j+1)] = values[i][j]
+            return data_dict
+
+    # This section reads the data from Excel #
+
+    # Read a set (set is the name of the worksheet)
+    # The set has eight elements
+    set_I = read_excel_data(inputData, "set")
+    print("set: ", set_I)
+
+    # Read an array 1x1 (array1 is the name of the worksheet)
+    array1 = read_excel_data(inputData, "array1")
+    array1 = array1[0]
+    print("array1: ", array1)
+
+    # Read an array 4x4 (array2 is the name of the worksheet)
+    array2 = read_excel_data(inputData, "array2")
+    print("array2: ", array2)
+
 #Paramètres
+
 v_0 =
 nb_vertices =
 c_fix =
