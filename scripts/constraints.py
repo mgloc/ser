@@ -40,7 +40,7 @@ def total_investment_cost(c_fix, l, alpha, X, c_var, P_in, nb_vertices):
     Total_Fixed_Investment_Cost = total_fixed_investment_cost(c_fix, l, alpha, X, nb_vertices)
     Total_Variable_Investment_Cost = total_variable_investment_cost(c_var, l, alpha, P_in, nb_vertices)
     return Total_Fixed_Investment_Cost + Total_Variable_Investment_Cost
-def total_cost(Tflh, c_heat, beta, P_in, c_om, l, X, p_umd, D, c_fix, alpha, c_var, nb_vertices):
+def total_cost(Tflh, c_heat, beta, P_in, c_om, l, X, p_umd, D, c_fix, alpha, c_var, nb_vertices,v_0):
     Total_Heat_Genration_Cost = total_heat_generation_cost(Tflh, c_heat, beta, P_in, v_0, nb_vertices)
     Total_Investment_Cost = total_investment_cost(c_fix, l, alpha, X, c_var, P_in, nb_vertices)
     Total_Maintenance_Cost = total_maintenance_cost(c_om, l, X, nb_vertices)
@@ -48,8 +48,8 @@ def total_cost(Tflh, c_heat, beta, P_in, c_om, l, X, p_umd, D, c_fix, alpha, c_v
     return Total_Heat_Genration_Cost + Total_Investment_Cost + Total_Maintenance_Cost + Unmet_Demand_Penalty
 
 # FONCTION FINALE
-def total_expense(c_rev, D, lbd, X, Tflh, c_heat, beta, P_in, c_om, l, p_umd, c_fix, alpha, c_var, nb_vertices):
-    Total_Cost = total_cost(Tflh, c_heat, beta, P_in, c_om, l, X, p_umd, D, c_fix, alpha, c_var, nb_vertices)
+def total_expense(c_rev, D, lbd, X, Tflh, c_heat, beta, P_in, c_om, l, p_umd, c_fix, alpha, c_var, nb_vertices,v_0):
+    Total_Cost = total_cost(Tflh, c_heat, beta, P_in, c_om, l, X, p_umd, D, c_fix, alpha, c_var, nb_vertices,v_0)
     Total_Revenue = total_revenue(c_rev, D, lbd, X, nb_vertices)
     return Total_Cost - Total_Revenue
 
