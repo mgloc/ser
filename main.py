@@ -41,16 +41,28 @@ for key,var in variables.items() :
 print("################# VARIABLES END ###############")
 
 L = [range(0,nb_vertices)]
-X = LpVariable('X', [L, L], cat='Binary')
-P_in = LpVariable('P_in', [L, L], cat='Continuous')
-P_out = LpVariable('P_out', [L, L], cat='Continuous')
+X = LpVariable.dict('X', [L, L], cat='Binary')
+P_in = LpVariable.dict('P_in', [L, L], lowBound = 0, cat='Continuous')
+P_out = LpVariable.dict('P_out', [L, L], lowBound = 0, cat='Continuous')
 
 #------------------------------CONTRAINTES & PROBLEME------------------------------
 
 Heating_Energy_Network_Optimization_Problem = LpProblem("Heating_Energy_Network_Optimization_Problem", LpMinimize)
 Heating_Energy_Network_Optimization_Problem += total_expense(c_rev, D, lbd, X, Tflh, c_heat, beta, P_in, c_om, l, p_umd, c_fix, alpha, c_var, nb_vertices,v_0)
-Heating_Energy_Network_Optimization_Problem += contrainte_1(X, nb_vertices)
-Heating_Energy_Network_Optimization_Problem += contrainte_2(X, nb_vertices)
+Heating_Energy_Network_Optimization_Problem += lpSum(X[i][j] for i,j in range(nb_vertices)) <= nb_vertices - 1
+
+for i in range(nb_vertices):
+    for j in range(nb_vertices):
+        if i != j:
+            Heating_Energy_Network_Optimization_Problem += ((X[i][j]-X[j,i]) <= 1)
+
+for i in range(nb_vertices):
+    for j in range(nb_vertices):
+        if i != j:
+            delta = d[(i,j)]*beta*lbd + teta_fix[(i,j)]*l[(i,j)]
+            eta = 1 - teta_var[(i,j)]*l[(i,j)]
+            Heating_Energy_Network_Optimization_Problem += eta*P_in[(i,j)] - P_out[(i,j)] == delta*X[(i,j)]
+
 Heating_Energy_Network_Optimization_Problem += contrainte_3(teta_var, teta_fix, l, lbd, beta, d, P_in, P_out, X, nb_vertices)
 Heating_Energy_Network_Optimization_Problem += contrainte_4(P_in, P_out, v_0, nb_vertices)
 Heating_Energy_Network_Optimization_Problem += contrainte_5(P_in, X, C_max, nb_vertices)
