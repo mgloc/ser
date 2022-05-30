@@ -40,35 +40,88 @@ for key,var in variables.items() :
     print(f"{key} : {var}")
 print("################# VARIABLES END ###############")
 
-L = [range(0,nb_vertices)]
-X = LpVariable.dict('X', [L, L], cat='Binary')
-P_in = LpVariable.dict('P_in', [L, L], lowBound = 0, cat='Continuous')
-P_out = LpVariable.dict('P_out', [L, L], lowBound = 0, cat='Continuous')
+L = [i for i in range(1,nb_vertices+1)]
+print(L)
+X = LpVariable.dicts('X', (L, L), cat='Binary')
+P_in = LpVariable.dicts('P_in', (L, L), lowBound = 0)
+P_out = LpVariable.dicts('P_out', (L, L), lowBound = 0)
+
+print(X)
 
 #------------------------------CONTRAINTES & PROBLEME------------------------------
 
 Heating_Energy_Network_Optimization_Problem = LpProblem("Heating_Energy_Network_Optimization_Problem", LpMinimize)
-Heating_Energy_Network_Optimization_Problem += total_expense(c_rev, D, lbd, X, Tflh, c_heat, beta, P_in, c_om, l, p_umd, c_fix, alpha, c_var, nb_vertices,v_0)
-Heating_Energy_Network_Optimization_Problem += lpSum(X[i][j] for i,j in range(nb_vertices)) <= nb_vertices - 1
 
-for i in range(nb_vertices):
-    for j in range(nb_vertices):
+Total_Fixed_Investment_Cost = lpSum(alpha*c_fix*l[(i-1,j-1)]*X[i][j] for i in range(1,nb_vertices+1) for j  in range(1,nb_vertices+1))
+
+Total_Variable_Investment_Cost = lpSum((alpha*c_var[(i-1,j-1)]*l[(i-1,j-1)])*P_in[i][j] for i in range(1,nb_vertices+1) for j  in range(1,nb_vertices+1))
+
+Total_Investment_Cost = Total_Fixed_Investment_Cost + Total_Variable_Investment_Cost
+
+Total_Heat_Genration_Cost = lpSum(((Tflh*c_heat[v_0])/beta)*P_in[v_0][j] for j  in range(1,nb_vertices+1))
+
+Total_Maintenance_Cost = lpSum((c_om[(i-1,j-1)]*l[(i-1,j-1)])*X[i][j] for i in range(1,nb_vertices+1) for j  in range(1,nb_vertices+1))
+
+Unmet_Demand_Penalty = lpSum((p_umd[(i-1,j-1)]*D[(i-1,j-1)])*(1 - X[i][j] - X[j][i]) for i in range(1,nb_vertices+1) for j  in range(1,nb_vertices+1))
+
+Total_Cost = Total_Heat_Genration_Cost + Total_Investment_Cost + Total_Maintenance_Cost + Unmet_Demand_Penalty
+
+Total_Revenue = lpSum(lbd*c_rev[(i-1,j-1)]*D[(i-1,j-1)]*X[i][j] for i in range(1,nb_vertices+1) for j  in range(1,nb_vertices+1))
+
+Heating_Energy_Network_Optimization_Problem += Total_Cost - Total_Revenue
+
+Heating_Energy_Network_Optimization_Problem += lpSum(X[i][j] for i in range(1,nb_vertices+1) for j  in range(1,nb_vertices+1)) <= nb_vertices - 1
+
+for i in range(1,nb_vertices+1):
+    for j in range(1,nb_vertices+1):
         if i != j:
-            Heating_Energy_Network_Optimization_Problem += ((X[i][j]-X[j,i]) <= 1)
+            Heating_Energy_Network_Optimization_Problem += ((X[i][j]-X[j][i]) <= 1)
 
-for i in range(nb_vertices):
-    for j in range(nb_vertices):
+for i in range(1,nb_vertices+1):
+    for j in range(1,nb_vertices+1):
         if i != j:
-            delta = d[(i,j)]*beta*lbd + teta_fix[(i,j)]*l[(i,j)]
-            eta = 1 - teta_var[(i,j)]*l[(i,j)]
-            Heating_Energy_Network_Optimization_Problem += eta*P_in[(i,j)] - P_out[(i,j)] == delta*X[(i,j)]
+            delta = d[(i-1,j-1)]*beta*lbd + teta_fix[(i-1,j-1)]*l[(i-1,j-1)]
+            eta = 1 - teta_var[(i-1,j-1)]*l[(i-1,j-1)]
+            Heating_Energy_Network_Optimization_Problem += eta*P_in[i][j] - P_out[i][j] == delta*X[i][j]
 
-Heating_Energy_Network_Optimization_Problem += contrainte_3(teta_var, teta_fix, l, lbd, beta, d, P_in, P_out, X, nb_vertices)
-Heating_Energy_Network_Optimization_Problem += contrainte_4(P_in, P_out, v_0, nb_vertices)
-Heating_Energy_Network_Optimization_Problem += contrainte_5(P_in, X, C_max, nb_vertices)
-Heating_Energy_Network_Optimization_Problem += contrainte_6(X, v_0, nb_vertices)
-Heating_Energy_Network_Optimization_Problem += contrainte_7(P_in, Q_max, v_0, nb_vertices)
-Heating_Energy_Network_Optimization_Problem += contrainte_8(X, v_0, nb_vertices)
+
+
+for j in range(1,nb_vertices+1):
+    if j != v_0:
+        contrainte_4_P_out = []
+        contrainte_4_P_in = []
+        for i in range(1,nb_vertices+1):
+            if i != j :
+                contrainte_4_P_out.append(P_out[i][j])
+                contrainte_4_P_in.append(P_in[j][i])
+        Heating_Energy_Network_Optimization_Problem += lpSum(contrainte_4_P_out[i] for i in range(len(contrainte_4_P_out))) == lpSum(contrainte_4_P_in[i] for i in range(len(contrainte_4_P_out)))
+
+for i in range(1,nb_vertices+1):
+    for j in range(1,nb_vertices+1):
+        Heating_Energy_Network_Optimization_Problem += (P_in[i][j] <= X[i][j]*C_max[(i-1,j-1)])
+
+contrainte_6 = []
+
+for i in range(1,nb_vertices+1):
+    if i != v_0:
+        contrainte_6.append(X[i][v_0])
+Heating_Energy_Network_Optimization_Problem += (lpSum(contrainte_6[i] for i in range(len(contrainte_6))) == 0)
+
+contrainte_7 = []
+
+for j in range(1,nb_vertices+1):
+    if j != v_0:
+        contrainte_7.append(P_in[v_0][j])
+Heating_Energy_Network_Optimization_Problem += (lpSum(contrainte_7[i] for i in range(len(contrainte_7))) <= Q_max[v_0])
+
+
+for i in range(1,nb_vertices+1):
+    if i != v_0:
+        contrainte_8 = []
+        for j in range(1,nb_vertices+1):
+            if j != i:
+                contrainte_8.append(X[j][i])
+        Heating_Energy_Network_Optimization_Problem += (lpSum(contrainte_8[i] for i in range(len(contrainte_8))) >= 1)
 
 #------------------------------RESOLUTION-----------------------------------------
 
