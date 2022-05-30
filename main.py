@@ -9,7 +9,7 @@ import scripts.get_parameters as gp
 
 #------------------------------DEFINE VARIABLES------------------------------
 # Utilisation du module get_parameters
-inputData = r'xls_tests\InputDataExample.xlsx'
+inputData = r'xls_file\InputDataEnergySmallInstance.xlsx'
 variables = gp.get_variables(inputData)
 
 # Attribution des variables

@@ -3,29 +3,29 @@ import numpy as np
 
 #Paramètres
 variables = {
-    'v_0':0,
-    'nb_vertices':0,
-    'c_fix' :0,
-    'c_var' :0,
-    'c_om' :0,
-    'c_heat' :0,
-    'c_rev' :0,
-    'p_umd' :0,
-    'alpha' :0,
-    'teta_fix' :0,
-    'teta_var' :0,
-    'Tflh':0,
-    'beta' :0,
-    'lbd' :0,
-    'l' :0,
-    'd':0, 
-    'D' :0,
-    'C_max' :0, 
-    'Q_max' :0
+    'v_0':None,
+    'nb_vertices':None,
+    'c_fix' :None,
+    'c_var' :None,
+    'c_om' :None,
+    'c_heat' :None,
+    'c_rev' :None,
+    'p_umd' :None,
+    'alpha' :None,
+    'teta_fix' :None,
+    'teta_var' :None,
+    'Tflh':None,
+    'beta' :None,
+    'lbd' :None,
+    'l' :None,
+    'd':None, 
+    'D' :None,
+    'C_max' :None, 
+    'Q_max' :None
     }
 
-# Input Data Preparation #
-def read_excel_data(filename, sheet_name):
+def read_excel_data(filename:str, sheet_name:str):
+    """Function use to read excel data"""
     data = pd.read_excel(filename, sheet_name=sheet_name, header=None, engine='openpyxl')
     values = data.values
     if min(values.shape) == 1:  # This If is to make the code insensitive to column-wise or row-wise expression #
@@ -51,36 +51,19 @@ def read_excel_data(filename, sheet_name):
                     data_dict[(i+1, j+1)] = values[i][j]
         return data_dict
 
-def testRead(inputData) :
-    # This section reads the data from Excel #
+def get_variables(inputData:str)->dict :
+    """Function use to get variables for the Heating Problem from excel"""
 
-    # Read a set (set is the name of the worksheet)
-    # The set has eight elements
-    set_I = read_excel_data(inputData, "set")
-    print("set: ", set_I)
+    variables['v_0'] = read_excel_data(inputData, "SourceNum")[0]
 
-    # Read an array 1x1 (array1 is the name of the worksheet)
-    array1 = read_excel_data(inputData, "array1")
-    array1 = array1[0]
-    print("array1: ", array1)
+    variables['nb_vertices'] = read_excel_data(inputData, "Nodes")[0]
 
-    # Read an array 4x4 (array2 is the name of the worksheet)
-    array2 = read_excel_data(inputData, "array2")
-    print("array2: ", array2)
-
-    v_0 = read_excel_data(inputData, "SourceNum")
-    variables['v_0'] = v_0[0]
-
-    nb_vertices = read_excel_data(inputData, "Nodes")
-    variables['nb_vertices'] = nb_vertices[0]
-
+    #Définition variable "l"
     node_coord = read_excel_data(inputData,"NodesCord")
-
     l = {}
     for i in range(variables['nb_vertices']):
         for j in range(variables['nb_vertices']):
             l[(i,j)] = np.sqrt((node_coord(i,1)-node_coord(j,1))**2 + (node_coord(i,2)-node_coord(j,2))**2)
-    
     variables['l'] = l
 
     variables['teta_fix'] = read_excel_data(inputData, "vfix(thetaijfix)")
@@ -114,6 +97,8 @@ def testRead(inputData) :
     variables['Q_max'] = read_excel_data(inputData, "SourceMaxCap(Qimax)")
 
     variables['p_umd'] = read_excel_data(inputData, "pumd(pijumd)")
+
+    return variables
 
 
 
