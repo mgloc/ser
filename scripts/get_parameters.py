@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 
 #Paramètres
 variables = {
@@ -71,7 +72,56 @@ def testRead(inputData) :
     variables['v_0'] = v_0[0]
 
     nb_vertices = read_excel_data(inputData, "Nodes")
-    nb_vertices = nb_vertices[0]
+    variables['nb_vertices'] = nb_vertices[0]
 
     node_coord = read_excel_data(inputData,"NodesCord")
+
+    l = {}
+    for i in range(variables['nb_vertices']):
+        for j in range(variables['nb_vertices']):
+            l[(i,j)] = np.sqrt((node_coord(i,1)-node_coord(j,1))**2 + (node_coord(i,2)-node_coord(j,2))**2)
+    
+    variables['l'] = l
+
+    variables['teta_fix'] = read_excel_data(inputData, "vfix(thetaijfix)")
+
+    variables['teta_var'] = read_excel_data(inputData, "vvar(thetaijvar)")
+
+    variables['c_fix'] = read_excel_data(inputData, "FixedUnitCost")[0]
+
+    variables['c_var'] = read_excel_data(inputData, "cvar(cijvar)")
+
+    variables['c_heat'] = read_excel_data(inputData, "cheat(ciheat)")
+
+    variables['c_om'] = read_excel_data(inputData, "com(cijom)")
+
+    variables['c_rev'] = read_excel_data(inputData, "crev(cijrev)")
+
+    variables['Tflh'] = read_excel_data(inputData, "Tflh(Tiflh)")[0]
+
+    variables['beta'] = read_excel_data(inputData, "Betta")[0]
+
+    variables['lbd'] = read_excel_data(inputData, "Lambda")[0]
+
+    variables['alpha'] = read_excel_data(inputData, "Alpha")[0]
+
+    variables['d'] = read_excel_data(inputData, "EdgesDemandPeak(dij)")
+
+    variables['D'] = read_excel_data(inputData, "EdgesDemandAnnual(Dij)")
+
+    variables['C_max'] = read_excel_data(inputData, "Cmax(cijmax)")
+
+    variables['Q_max'] = read_excel_data(inputData, "SourceMaxCap(Qimax)")
+
+    variables['p_umd'] = read_excel_data(inputData, "pumd(pijumd)")
+
+
+
+
+
+
+
+            
+
+    
 
