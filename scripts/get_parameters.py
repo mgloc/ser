@@ -48,7 +48,7 @@ def read_excel_data(filename:str, sheet_name:str):
         else:  # For two-dimension (matrix) parameters in Excel"""
         for i in range(values.shape[0]):
             for j in range(values.shape[1]):
-                data_dict[(i, j)] = values[i][j]
+                data_dict[(i+1, j+1)] = values[i][j]
         return data_dict
 
 def get_variables(inputData:str)->dict :
@@ -61,9 +61,9 @@ def get_variables(inputData:str)->dict :
     #Définition variable "l"
     node_coord = read_excel_data(inputData,"NodesCord")
     l = {}
-    for i in range(variables['nb_vertices']):
-        for j in range(variables['nb_vertices']):
-            l[(i,j)] = np.sqrt((node_coord[(i,0)]-node_coord[(j,0)])**2 + (node_coord[(i,1)]-node_coord[(j,1)])**2)
+    for i in range(1,variables['nb_vertices']+1):
+        for j in range(1,variables['nb_vertices']+1):
+            l[(i,j)] = np.sqrt((node_coord[(i,1)]-node_coord[(j,1)])**2 + (node_coord[(i,2)]-node_coord[(j,2)])**2)
     variables['l'] = l
 
     variables['teta_fix'] = read_excel_data(inputData, "vfix(thetaijfix)")
