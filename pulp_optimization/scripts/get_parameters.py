@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from scipy.spatial import distance
 
 #Paramètres
 variables = {
@@ -63,7 +64,8 @@ def get_variables(inputData:str)->dict :
     l = {}
     for i in range(1,variables['nb_vertices']+1):
         for j in range(1,variables['nb_vertices']+1):
-            l[(i,j)] = np.sqrt((node_coord[(i,1)]-node_coord[(j,1)])**2 + (node_coord[(i,2)]-node_coord[(j,2)])**2)
+            l[(i,j)] = distance.euclidean([node_coord[(i,1)], node_coord[(i,2)]], [node_coord[(j,1)], node_coord[(j,2)]])
+            
     variables['l'] = l
 
     variables['teta_fix'] = read_excel_data(inputData, "vfix(thetaijfix)")

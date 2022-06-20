@@ -6,7 +6,7 @@ import scripts.get_parameters as gp
 
 #------------------------------DEFINE VARIABLES------------------------------
 # Utilisation du module get_parameters
-inputData = r'xls_file\InputDataEnergySmallInstance.xlsx'
+inputData = r'content\InputDataEnergySmallInstance.xlsx'
 variables = gp.get_variables(inputData)
 
 # Attribution des variables
@@ -42,34 +42,33 @@ print(L)
 X = LpVariable.dicts('X', (L, L), cat='Binary')
 P_in = LpVariable.dicts('P_in', (L, L), lowBound = 0)
 P_out = LpVariable.dicts('P_out', (L, L), lowBound = 0)
-
 print(X)
 
 #------------------------------CONTRAINTES & PROBLEME------------------------------
 
 Heating_Energy_Network_Optimization_Problem = LpProblem("Heating_Energy_Network_Optimization_Problem", LpMinimize)
 
-Total_Fixed_Investment_Cost = lpSum(alpha*c_fix*l[(i,j)]*X[i][j] for i in range(1,nb_vertices+1) for j  in range(1,nb_vertices+1))
+Total_Fixed_Investment_Cost = lpSum(alpha*c_fix*l[(i,j)]*X[i][j] for i in range(1,nb_vertices+1) for j  in range(1,nb_vertices+1) if (i!=j))
 
-Total_Variable_Investment_Cost = lpSum((alpha*c_var[(i,j)]*l[(i,j)])*P_in[i][j] for i in range(1,nb_vertices+1) for j  in range(1,nb_vertices+1))
+Total_Variable_Investment_Cost = lpSum((alpha*c_var[(i,j)]*l[(i,j)])*P_in[i][j] for i in range(1,nb_vertices+1) for j  in range(1,nb_vertices+1) if (i!=j))
 
 Total_Investment_Cost = Total_Fixed_Investment_Cost + Total_Variable_Investment_Cost
 
-Total_Heat_Genration_Cost = lpSum(((Tflh*c_heat[v_0])/beta)*P_in[v_0][j] for j  in range(1,nb_vertices+1))
+Total_Heat_Genration_Cost = lpSum(((Tflh*c_heat[v_0])/beta)*P_in[v_0][j] for j  in range(1,nb_vertices+1) if (j != v_0))
 
-Total_Maintenance_Cost = lpSum((c_om[(i,j)]*l[(i,j)])*X[i][j] for i in range(1,nb_vertices+1) for j  in range(1,nb_vertices+1))
+Total_Maintenance_Cost = lpSum((c_om[(i,j)]*l[(i,j)])*X[i][j] for i in range(1,nb_vertices+1) for j  in range(1,nb_vertices+1) if (i!=j))
 
-Unmet_Demand_Penalty = lpSum(0.5*(p_umd[(i,j)]*D[(i,j)])*(1 - X[i][j] - X[j][i]) for i in range(1,nb_vertices+1) for j  in range(1,nb_vertices+1))
+Unmet_Demand_Penalty = lpSum(0.5*(p_umd[(i,j)]*D[(i,j)])*(1 - X[i][j] - X[j][i]) for i in range(1,nb_vertices+1) for j  in range(1,nb_vertices+1) if (i != j))
 
 Total_Cost = Total_Heat_Genration_Cost + Total_Investment_Cost + Total_Maintenance_Cost + Unmet_Demand_Penalty
 
-Total_Revenue = lpSum(lbd*c_rev[(i,j)]*D[(i,j)]*X[i][j] for i in range(1,nb_vertices+1) for j  in range(1,nb_vertices+1))
+Total_Revenue = lpSum(lbd*c_rev[(i,j)]*D[(i,j)]*X[i][j] for i in range(1,nb_vertices+1) for j  in range(1,nb_vertices+1) if (i!=j))
 
 Z = Total_Cost - Total_Revenue
 
 Heating_Energy_Network_Optimization_Problem += Z
 
-Heating_Energy_Network_Optimization_Problem += lpSum(X[i][j] for i in range(1,nb_vertices+1) for j  in range(1,nb_vertices+1)) <= nb_vertices - 1
+Heating_Energy_Network_Optimization_Problem += (lpSum(X[i][j] for i in range(1,nb_vertices+1) for j  in range(1,nb_vertices+1)) == nb_vertices - 1)
 
 for i in range(1,nb_vertices+1):
     for j in range(1,nb_vertices+1):
@@ -104,4 +103,4 @@ for i in range(1,nb_vertices+1):
 Heating_Energy_Network_Optimization_Problem.solve()
 
 for v in Heating_Energy_Network_Optimization_Problem.variables() :
-        print(v.name," = ",v.varValue)
+    print(v.name," = ",v.varValue)
