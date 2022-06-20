@@ -1,5 +1,6 @@
 from msilib.schema import Binary
 from pulp import *
+import networkx as nx
 
 #------------------------------IMPORT PARAMETERS------------------------------
 import scripts.get_parameters as gp
@@ -54,13 +55,13 @@ Total_Variable_Investment_Cost = lpSum((alpha*c_var[(i,j)]*l[(i,j)])*P_in[i][j] 
 
 Total_Investment_Cost = Total_Fixed_Investment_Cost + Total_Variable_Investment_Cost
 
-Total_Heat_Genration_Cost = lpSum(((Tflh*c_heat[v_0])/beta)*P_in[v_0][j] for j  in range(1,nb_vertices+1) if (j != v_0))
+Total_Heat_Generation_Cost = ((Tflh*c_heat[v_0-1])/beta)*lpSum(P_in[v_0][j] for j  in range(1,nb_vertices+1) if (j != v_0))
 
 Total_Maintenance_Cost = lpSum((c_om[(i,j)]*l[(i,j)])*X[i][j] for i in range(1,nb_vertices+1) for j  in range(1,nb_vertices+1) if (i!=j))
 
-Unmet_Demand_Penalty = lpSum(0.5*(p_umd[(i,j)]*D[(i,j)])*(1 - X[i][j] - X[j][i]) for i in range(1,nb_vertices+1) for j  in range(1,nb_vertices+1) if (i != j))
+Unmet_Demand_Penalty = 0.5*lpSum((p_umd[(i,j)]*D[(i,j)])*(1 - X[i][j] - X[j][i]) for i in range(1,nb_vertices+1) for j  in range(1,nb_vertices+1) if (i != j))
 
-Total_Cost = Total_Heat_Genration_Cost + Total_Investment_Cost + Total_Maintenance_Cost + Unmet_Demand_Penalty
+Total_Cost = Total_Heat_Generation_Cost + Total_Investment_Cost + Total_Maintenance_Cost + Unmet_Demand_Penalty
 
 Total_Revenue = lpSum(lbd*c_rev[(i,j)]*D[(i,j)]*X[i][j] for i in range(1,nb_vertices+1) for j  in range(1,nb_vertices+1) if (i!=j))
 
@@ -103,4 +104,6 @@ for i in range(1,nb_vertices+1):
 Heating_Energy_Network_Optimization_Problem.solve()
 
 for v in Heating_Energy_Network_Optimization_Problem.variables() :
-    print(v.name," = ",v.varValue)
+    if v.varValue != 0:
+        print(v.name," = ",v.varValue)
+
